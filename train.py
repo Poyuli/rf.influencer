@@ -9,7 +9,7 @@ from sklearn.cross_validation import cross_val_score
 
 os.chdir("/Users/BradLi/Documents/Data Science/Kaggle/Influencer")
 writeFile = False
-model = "SVM"
+model = "RF"
 
 # Merging training and test sets
 df_train = pd.read_csv("train.csv", header = 0)
@@ -53,7 +53,7 @@ data = df.values
 
 # Random forest or SVM training
 if model == "RF":
-    forest = RFC(n_estimators = 100)
+    forest = RFC(n_estimators = 500)
     cv_score = cross_val_score(forest, data[0:5500,1::], data[0:5500,0], cv=10)
     print "CV Score = ", cv_score.mean(),"\n"
     forest = forest.fit(data[0:5500,1::], data[0:5500,0])
