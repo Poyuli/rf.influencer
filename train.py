@@ -6,10 +6,12 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier as RFC
 from sklearn import svm, grid_search
 from sklearn.cross_validation import cross_val_score
+from sklearn.decomposition import PCA
 
 os.chdir("/Users/BradLi/Documents/Data Science/Kaggle/Influencer")
 writeFile = False
 model = "RF"
+pca_adopted = False
 
 # Merging training and test sets
 df_train = pd.read_csv("train.csv", header = 0)
@@ -40,20 +42,28 @@ df = df.drop(['A_retweets_received','B_retweets_received','A_retweets_sent','B_r
 df = df.drop(['A_network_feature_1','B_network_feature_1','A_network_feature_2','B_network_feature_2','A_network_feature_3','B_network_feature_3'], axis=1)
 
 df['engage'] = df.msnt + df.rsnt + df.posts
+df['fad'] = df.mrcv + df.rrcv
 df['ratio_f'] = df.follower - df.following
-df['ratio_r'] = df.rrcv - df.rsnt
-df['ratio_m'] = df.mrcv - df.msnt
 df['ft23'] = df.ft2 + df.ft3
-df = df.drop(['msnt','rsnt','posts','mrcv','rrcv','following','ft2','ft3'], axis=1)
+df = df.drop(['following','posts','msnt','rsnt','rrcv','mrcv','ft1','ft2','ft3'], axis=1)
 
 if model == "SVM":
     df = (df - df.min()) / (df.max() - df.min())
 
 data = df.values
 
+if pca_adopted == True:
+    label = data[0::,0]
+    label = label.reshape(label.size,1)
+    pca = PCA(n_components = 3)
+    pca.fit(data[0::,1::])
+    print("Explained variance by PCA = ", pca.explained_variance_ratio_)
+    data = pca.transform(data[0::,1::])
+    data = np.concatenate((label, data), axis=1)
+
 # Random forest or SVM training
 if model == "RF":
-    forest = RFC(n_estimators = 500)
+    forest = RFC(n_estimators = 200)
     cv_score = cross_val_score(forest, data[0:5500,1::], data[0:5500,0], cv=10)
     print "CV Score = ", cv_score.mean(),"\n"
     forest = forest.fit(data[0:5500,1::], data[0:5500,0])
@@ -64,8 +74,8 @@ if model == "RF":
     
 elif model == "SVM":
     svc = svm.SVC()
-    param = {'C':[1e3,1e2,1e1,1e0,1e-1,1e-2], 'gamma':[1e-1,1e0,1e1,1e2,1e3,1e4], 'kernel':['rbf']}
-    svc = grid_search.GridSearchCV(svc, param, cv=10)
+    param = {'C':[1e3,1e2,1e1,1e0,1e-1,1e-2], 'gamma':[1e-2,1e-1,1e0,1e1,1e2,1e3], 'kernel':['rbf']}
+    svc = grid_search.GridSearchCV(svc, param, cv=5)
     svc.fit(data[0:5500,1::], data[0:5500,0])
     output = svc.predict(data[5500::,1::])
     print "Optimized parameters:"
