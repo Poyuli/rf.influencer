@@ -8,7 +8,6 @@ from sklearn import svm, grid_search
 from sklearn.cross_validation import cross_val_score
 from sklearn.decomposition import PCA
 
-os.chdir("/Users/BradLi/Documents/Data Science/Kaggle/Influencer")
 writeFile = False
 model = "RF"
 pca_adopted = False
